@@ -12,7 +12,10 @@ import {
     placeInitialSell,
     placeLowSell,
     placeSell
-} from './functions/actions'
+} from './functions/actions';
+
+import { binance } from './server';
+
 
 let openOrders = []
 let latestOrder = [{
@@ -44,6 +47,8 @@ export const trade = async (settings, socket) => {
         ; (async () => {
             const { balances } = await accountBalances(settings)
 
+            //console.log(`Ze account balances are ${balances}`)
+
             if (balances) {
                 for (let i in balances) {
                     if (balances[i].asset == `${settings.info.baseAsset}`) {
@@ -55,6 +60,9 @@ export const trade = async (settings, socket) => {
                 }
             } else {
                 const { assets } = await accountBalances(settings)
+
+                //console.log(`Ze account assets are ${JSON.stringify(assets)}`)
+
                 for (let i in assets) {
                     if (assets[i].asset == `${settings.info.baseAsset}`) {
                         acbl.MAIN_ASSET = assets[i].availableBalance
@@ -138,7 +146,9 @@ export const trade = async (settings, socket) => {
             if ((latestOrder[0].status == 'FILLED' && latestOrder[0].side == 'BUY')
                 || (latestOrder[0].status == 'CANCELED' && latestOrder[0].side == 'SELL')) {
                 logger.info(`Placing normal SELL..`)
-                latestOrder[0] = await placeSell(acbl, latestOrder, fullMultiplier, current_price, settings)
+                console.log(`Trade params are \n 1. PAIR ${settings.MAIN_MARKET} \t 2. Qty ${latestOrder[0].executedQty} \t 3. Price ${current_price * fullMultiplier}`)
+                //latestOrder[0] = await placeSell(acbl, latestOrder, fullMultiplier, current_price, settings)
+                console.info(await binance.futuresSell(settings.MAIN_MARKET, latestOrder[0].executedQty, (current_price * fullMultiplier).toFixed(`${settings.info.quoteAssetPrecision}`), {reduceOnly: true}))
                 return
             }
 
