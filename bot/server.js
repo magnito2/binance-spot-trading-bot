@@ -6,9 +6,11 @@ const app = express()
 const server = http.createServer(app);
 const io = require('socket.io')(server);
 
+const Binance = require('node-binance-api');
+
 import { trade } from './index'
 import { clearInterval } from 'timers'
-import { logger, profitTracker } from './functions/utils'
+import { logger, profitTracker, addKlineFromWS, addKlinesFromREST, CandlesRepo } from './functions/utils'
 import { exchangeInfo } from './functions/info'
 
 io.on('connection', (socket) => {
@@ -53,9 +55,30 @@ let draft
     await profitTracker(io, obj)
 })();
 
+export const binance = Binance().options({
+    APIKEY: obj.API_KEY,
+    APISECRET: obj.API_SECRET,
+    test: true,
+    useServerTime: true,
+    verbose: true,
+});
+
+//create a storage for the candles
+export const kRepo = new CandlesRepo(30);
+
+const addKlineWS = addKlineFromWS(kRepo);
+export const addKlineRest = addKlinesFromREST(kRepo);
+
+//call rest server once
+(async () => {
+    await addKlineRest(obj);
+})();
+//start kline server
+binance.futuresSubscribe( 'btcusdt@kline_1m', addKlineWS);
+
 app.get('/', (req, res) => {
     res.render('form', { data: obj });
-})
+});
 
 app.post('/start', (req, res) => {
     let { pin, action } = req.body
