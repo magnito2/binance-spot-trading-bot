@@ -1,5 +1,4 @@
 import {
-    openOrder,
     allOrder,
     checkPrice,
     accountBalances
@@ -10,8 +9,7 @@ import {
     placeBuy,
     placeInitialBuy,
     placeInitialSell,
-    placeLowSell,
-    placeSell
+    placeLowSell
 } from './functions/actions';
 
 import { binance } from './server';
@@ -23,10 +21,10 @@ let latestOrder = [{
 }]
 let acbl = {
     FIAT: 0,
-    MAIN_ASSET: 0
+    POSITION: 0
 }
 
-// The loop is set to poll the APIs in X milliseconds.
+// The loop is set to poll the APIs in X milliseconds. @TODO : Removing the polling
 export const trade = async (settings, socket) => {
     // Calculate the highest and lowest percentage multipliers according to the set WIGGLE_ROOM
     const width = Number(settings.WIGGLE_ROOM / 100)
@@ -45,28 +43,20 @@ export const trade = async (settings, socket) => {
 
         //Check and set account balances
         ; (async () => {
-            const { balances } = await accountBalances(settings)
+            const { positions, assets } = await accountBalances(settings)
 
-            //console.log(`Ze account balances are ${balances}`)
-
-            if (balances) {
-                for (let i in balances) {
-                    if (balances[i].asset == `${settings.info.baseAsset}`) {
-                        acbl.MAIN_ASSET = balances[i].free
-                    }
-                    if (balances[i].asset == `${settings.info.quoteAsset}`) {
-                        acbl.FIAT = balances[i].free
+            if (positions) {
+                for (let i in positions) {
+                    if (positions[i].symbol == `${settings.MAIN_MARKET}`) {
+                        acbl.POSITION = positions[i].positionAmt
                     }
                 }
-            } else {
-                const { assets } = await accountBalances(settings)
-
-                //console.log(`Ze account assets are ${JSON.stringify(assets)}`)
+            }
+            if(assets) {
+    
+                //console.log(`Account assets are ${JSON.stringify(assets)}`)
 
                 for (let i in assets) {
-                    if (assets[i].asset == `${settings.info.baseAsset}`) {
-                        acbl.MAIN_ASSET = assets[i].availableBalance
-                    }
                     if (assets[i].asset == `${settings.info.quoteAsset}`) {
                         acbl.FIAT = assets[i].availableBalance
                     }
@@ -75,31 +65,29 @@ export const trade = async (settings, socket) => {
         })();
 
     // Get the current price and also the latest two candle sticks
-    const price = await checkPrice(`${settings.MAIN_MARKET}`, settings)
-    const current_price = price.price
+    const price = await binance.futuresPrices({'symbol': settings.MAIN_MARKET});
 
     logger.info(`Ticker: ${price.price}`)
     price.price = Number(price.price).toFixed(`${settings.info.quoteAssetPrecision}`)
 
     // Check for open orders and if it is a BUY order and has not been filled within X minutes, cancel it
     // so that you can place another BUY order
-    openOrders = await openOrder(openOptions, settings)
+    //openOrders = await openOrder(openOptions, settings)
+    openOrders = await binance.futuresOpenOrders(settings.MAIN_MARKET);
 
     // Guard against errors
     if (openOrders.msg) {
         logger.error(openOrders.msg)
-        const openOptions = {
-            symbol: `${settings.MAIN_MARKET}`,
-            timestamp: Date.now()
-        };
-        openOrders = await openOrder(openOptions, settings)
-
+        openOrders = await binance.futuresOpenOrders(settings.MAIN_MARKET);
     }
+    openOrders.length && console.log(`Current Open Orders \n${JSON.stringify(openOrders)}`);
     try {
         if (openOrders.length > 0
-            && ((Date.now() - Number(openOrders[0].clientOrderId)) / 1000) > cancelAfter
-            && openOrders[0].side == 'BUY') {
-            await cancelStaleOrder(openOrders, current_price, fullMultiplier, settings)
+            && ((Date.now() - Number(openOrders[0].time)) / 1000) > cancelAfter
+            && !openOrders[0].reduceOnly) {
+            //await cancelStaleOrder(openOrders, price.price, fullMultiplier, settings)
+            logger.info('Cancelling current order')
+            await binance.futuresCancel(settings.MAIN_MARKET, {orderId: openOrders[0].orderId})
         }
 
     } catch (error) {
@@ -129,6 +117,7 @@ export const trade = async (settings, socket) => {
             if ((latestOrder[0].side == 'SELL' && latestOrder[0].status == 'FILLED')
                 || (latestOrder[0].status == 'CANCELED' && latestOrder[0].side == 'BUY')) {
                 logger.info(`Placing normal BUY..`)
+                console.log(`Trade params are \n 1. PAIR ${settings.MAIN_MARKET} \t 2. Qty ${acbl.FIAT} \t 3. Price ${price.price}`)
                 latestOrder[0] = await placeBuy(acbl, latestOrder, bottomBorder, price, RSI, settings)
                 return
             }
@@ -138,7 +127,7 @@ export const trade = async (settings, socket) => {
             if (latestOrder[0].status == 'CANCELED'
                 && latestOrder[0].side == 'SELL') {
                 logger.info(`Placing LOW SELL..`)
-                latestOrder[0] = await placeLowSell(acbl, latestOrder, fullMultiplier, current_price, settings)
+                latestOrder[0] = await placeLowSell(acbl, latestOrder, fullMultiplier, price.price, settings)
                 return
             }
 
@@ -146,9 +135,9 @@ export const trade = async (settings, socket) => {
             if ((latestOrder[0].status == 'FILLED' && latestOrder[0].side == 'BUY')
                 || (latestOrder[0].status == 'CANCELED' && latestOrder[0].side == 'SELL')) {
                 logger.info(`Placing normal SELL..`)
-                console.log(`Trade params are \n 1. PAIR ${settings.MAIN_MARKET} \t 2. Qty ${latestOrder[0].executedQty} \t 3. Price ${current_price * fullMultiplier}`)
+                console.log(`Trade params are \n 1. PAIR ${settings.MAIN_MARKET} \t 2. Qty ${latestOrder[0].executedQty} \t 3. Price ${price.price * fullMultiplier}`)
                 //latestOrder[0] = await placeSell(acbl, latestOrder, fullMultiplier, current_price, settings)
-                console.info(await binance.futuresSell(settings.MAIN_MARKET, latestOrder[0].executedQty, (current_price * fullMultiplier).toFixed(`${settings.info.quoteAssetPrecision}`), {reduceOnly: true}))
+                console.info(await binance.futuresSell(settings.MAIN_MARKET, latestOrder[0].executedQty, (price.price * fullMultiplier).toFixed(`${settings.info.quoteAssetPrecision}`), {reduceOnly: true}))
                 return
             }
 
@@ -183,7 +172,7 @@ export const trade = async (settings, socket) => {
     try {
         if (latestOrder.length > 0) {
             socket.emit('pending', latestOrder[0]);
-            socket.emit('ticker', current_price);
+            socket.emit('ticker', price.price);
             logger.info(`Latest Order: | ${latestOrder[0].origQty}@${latestOrder[0].price} | ${latestOrder[0].side} | ${latestOrder[0].status}`)
         }
     } catch (error) {
