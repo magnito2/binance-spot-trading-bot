@@ -10,7 +10,7 @@ const Binance = require('node-binance-api');
 
 import { trade } from './index'
 import { clearInterval } from 'timers'
-import { logger, profitTracker, addKlineFromWS, addKlinesFromREST, CandlesRepo } from './functions/utils'
+import { logger, profitTracker, addKlineFromWS, addKlinesFromREST, CandlesRepo, TickerPrice } from './functions/utils'
 import { exchangeInfo } from './functions/info'
 
 io.on('connection', (socket) => {
@@ -74,7 +74,11 @@ export const addKlineRest = addKlinesFromREST(kRepo);
     await addKlineRest(obj);
 })();
 //start kline server
-binance.futuresSubscribe( 'btcusdt@kline_1m', addKlineWS);
+binance.futuresSubscribe( `${obj.MAIN_MARKET.toLowerCase()}@kline_1m`, addKlineWS);
+
+//start mark price stream
+export const tickerRepo = new TickerPrice();
+binance.futuresAggTradeStream( obj.MAIN_MARKET,  tickerRepo.updatePrice);
 
 app.get('/', (req, res) => {
     res.render('form', { data: obj });
