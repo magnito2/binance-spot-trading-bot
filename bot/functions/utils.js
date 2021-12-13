@@ -130,8 +130,24 @@ export const profitTracker = async (io, obj) => {
     });
 }
 
-//Make a klines object that will store set number klines
+//Make a TickerPrice object to alway have the latest price using websocket
+export function TickerPrice(window=10){
+    let latestPrice = 0;
+    let updateTime = 0;
+    const updateWindow = +window
+    this.isUpdated = () => Date.now() - updateTime < updateWindow * 1000; //ensure last update is within bounds
 
+    this.updatePrice = (obj) => {
+        latestPrice = obj.price;
+        updateTime = obj.timestamp;
+    }
+
+    this.getTickerPrice = () => {
+        return latestPrice;
+    }
+}
+
+//Make a klines object that will store set number klines
 export function Kline(open, high, low, close, vol, openTime, closeTime){
     this.open = Number(open);
     this.high = Number(high);
