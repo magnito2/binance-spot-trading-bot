@@ -3,7 +3,7 @@ import { logger } from './utils'
 export const prepareOrder = (st, acbl, price, RSI, bottomBorder) => {
     if (RSI > st.HIGHEST_RSI) {
         logger.error(`Exiting, RSI is ${RSI}, which is above ${st.HIGHEST_RSI}`)
-        return
+        return {'error': `Exiting, RSI is ${RSI}, which is above ${st.HIGHEST_RSI}`}
     }
     const fiat_pct = Number(st.FIAT_OR_QUOTE_PERCENT) / 100
     const buyingPrice = Number(price * bottomBorder).toFixed(`${st.info.quoteAssetPrecision}`)
