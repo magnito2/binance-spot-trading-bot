@@ -3,7 +3,7 @@ const winston = require('winston');
 const fs = require('fs');
 const cron = require('node-cron');
 
-import { avgPrice30, avgPrice, getAllOrders } from './info';
+import { getAllOrders } from './info';
 import { kRepo } from '../server';
 
 const logDir = 'logs';
@@ -228,23 +228,13 @@ export const addKlineFromWS = (repo) => (obj) => {
     }
 }
 
-export const addKlinesFromREST = (repo) => async (st) => {
+export const addKlinesFromREST = (repo) => async (resp) => {
 
-    const resp = await avgPrice30(`${st.MAIN_MARKET}`, st)
-
-    if(resp.hasOwnProperty('msg')){
-        console.error(resp.msg);
-        return;
-    }
-
-    const arr = resp;
-
-    if(!Array.isArray(arr)){
-        console.error(`${arr} expected an array`);
+    if(!Array.isArray(resp)){
+        console.error(`${JSON.stringify(resp)} expected an array`);
         return
     }
-
-    arr.forEach((kline) =>{
+    resp.forEach((kline) =>{
         const candle = new Kline(
             kline[1], //open price
             kline[2], //high price
@@ -256,4 +246,31 @@ export const addKlinesFromREST = (repo) => async (st) => {
         );
         repo.add(candle);
     });
+}
+
+export class Account {
+    //to keep a local copy of the updated user datastream
+    constructor(){
+        this.account = {
+            order: undefined,
+            position: undefined,
+            asset: undefined
+        }
+    }
+
+    ws_margin_call(data){
+        console.log(data)
+    }
+
+    ws_account_update(data){
+        console.log(data)
+    }
+
+    ws_order_update(data){
+        console.log(data)
+    }
+
+    ws_account_config_update(data){
+        console.log(data)
+    }
 }
