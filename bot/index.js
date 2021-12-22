@@ -41,6 +41,7 @@ export const trade = async (settings, socket) => {
                 }
             }
             else {
+                console.log(`We have no open position`)
                 acbl.POSITION = undefined; //reset
             }
             if(assets) {
@@ -114,7 +115,7 @@ export const trade = async (settings, socket) => {
             }
 
             // Reduce any current open position
-            if (acbl.POSITION ) {
+            if (+acbl.POSITION.positionAmt ) {
                 logger.info(`Current open position \n
                     AMOUNT: ${acbl.POSITION.positionAmt}, ENTRY: ${acbl.POSITION.entryPrice}`);
                 
