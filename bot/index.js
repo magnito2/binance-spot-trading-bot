@@ -109,7 +109,7 @@ export const trade = async (settings, socket) => {
                 } else {
                     latestOrder = await binance.futuresBuy( settings.MAIN_MARKET, orderParams.quantity, orderParams.price );
                     console.log(latestOrder)
-                    logger.info(`New order placed, ID: ${latestOrder.orderId}, Qty: ${latestOrder.quantity}@${latestOrder.price} | ${latestOrder.side}`)
+                    logger.info(`New order placed, ID: ${latestOrder.orderId}, Qty: ${latestOrder.origQty}@${latestOrder.price} | ${latestOrder.side}`)
                     return
                 }
             }
