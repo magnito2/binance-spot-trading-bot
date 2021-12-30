@@ -152,7 +152,7 @@ export const trade = async (settings, socket) => {
 
                 return
 
-            } else if (acbl.POSITION) {
+            } else if (+acbl.POSITION.positionAmt) {
                 // Initialize order options
                 logger.info(`Closing Initial Position..`)
                 const executionPrice = (acbl.POSITION.entryPrice * fullMultiplier) < price ? price : +acbl.POSITION.entryPrice * fullMultiplier;
