@@ -98,7 +98,8 @@ export const trade = async (settings, socket) => {
             //console.log(`Length of all orders are ${allOrders.length}\n Latest order is ${JSON.stringify(latestOrder)}\nLatest order is ${JSON.stringify(allOrders[allOrders.length - 1])}`);
 
             if ((latestOrder.side == 'SELL' && latestOrder.status == 'FILLED')
-                || (latestOrder.status == 'CANCELED' && latestOrder.side == 'BUY')) {
+                || (latestOrder.status == 'CANCELED' && latestOrder.side == 'BUY')
+                || (latestOrder.status == 'EXPIRED' && latestOrder.side == 'BUY')) {
                 logger.info(`Placing normal BUY..`)
                 logger.info(`Trade params are \n 1. PAIR ${settings.MAIN_MARKET} \t 2. Qty ${acbl.FIAT} \t 3. Price ${price}`)
 
