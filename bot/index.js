@@ -100,14 +100,15 @@ export const trade = async (settings, socket) => {
             if ((latestOrder.side == 'SELL' && latestOrder.status == 'FILLED')
                 || (latestOrder.status == 'CANCELED' && latestOrder.side == 'BUY')
                 || (latestOrder.status == 'EXPIRED' && latestOrder.side == 'BUY')) {
-                logger.info(`Placing normal BUY..`)
-                logger.info(`Trade params are \n 1. PAIR ${settings.MAIN_MARKET} \t 2. Qty ${acbl.FIAT} \t 3. Price ${price}`)
-
+                
                 const orderParams = prepareOrder(settings, acbl, price, RSI, bottomBorder);
                 if(orderParams.error){
                     logger.error(orderParams.error);
                     return
                 } else {
+                    logger.info(`Placing normal BUY..`)
+                    logger.info(`Trade params are \n 1. PAIR ${settings.MAIN_MARKET} \t 2. Qty ${orderParams.quantity} \t 3. Price ${orderParams.price}`)
+
                     latestOrder = await binance.futuresBuy( settings.MAIN_MARKET, orderParams.quantity, orderParams.price );
                     console.log(latestOrder)
                     logger.info(`New order placed, ID: ${latestOrder.orderId}, Qty: ${latestOrder.origQty}@${latestOrder.price} | ${latestOrder.side}`)

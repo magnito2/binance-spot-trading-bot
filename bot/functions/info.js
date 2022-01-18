@@ -148,7 +148,8 @@ export const exchangeInfo = async (st) => {
         minQty: 0,
         baseAsset: '',
         quoteAsset: '',
-        quoteAssetPrecision: 0
+        quoteAssetPrecision: 0,
+        tickSize: 0
     }
     json.symbols.forEach(market => {
         // get the exchange info for the current market
@@ -168,10 +169,16 @@ export const exchangeInfo = async (st) => {
                 }
 
                 if (filter.filterType == 'PRICE_FILTER') {
+                    console.log("PRICE FILTER OBJECT")
+                    console.log(JSON.stringify(filter))
                     if (filter.minPrice >= `1.00`) {
                         info.quoteAssetPrecision = Math.floor(Math.log10(filter.minPrice));
                     } else {
                         info.quoteAssetPrecision = -Math.floor(Math.log10(filter.minPrice));
+                    }
+
+                    if(filter.tickSize){
+                        info.tickSize = Number(filter.tickSize)
                     }
                 }
 

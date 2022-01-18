@@ -274,3 +274,8 @@ export class Account {
         console.log(data)
     }
 }
+
+export const toTickSize = (price, tickSize = 1) => {
+    const inv = 1/Number(tickSize);
+    return Math.round(price * inv) / inv;
+}

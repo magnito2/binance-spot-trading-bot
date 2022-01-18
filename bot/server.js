@@ -27,7 +27,8 @@ let info = {
     minQty: 0,
     baseAsset: '',
     quoteAsset: '',
-    quoteAssetPrecision: 0
+    quoteAssetPrecision: 0,
+    tickSize: 0
 }
 
 const port = obj.PORT
