@@ -123,7 +123,7 @@ app.post('/', (req, res) => {
 export const binance = Binance().options({
     APIKEY: obj.API_KEY,
     APISECRET: obj.API_SECRET,
-    test: true,
+    test: obj.TESTING,
     useServerTime: true,
     verbose: true,
 });

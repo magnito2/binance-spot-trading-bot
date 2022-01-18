@@ -4,7 +4,7 @@
   "API_KEY": "",
   "STREAM_URL": "wss://testnet.binancefuture.com/ws",
   "WIGGLE_ROOM": "0.5",
-  "MAIN_MARKET": "BTCBUSD",
+  "MAIN_MARKET": "BTCUSDT",
   "CANCEL_AFTER": "21600",
   "INTERVAL": "2000",
   "INSTANCE_NAME": "BTC",
@@ -19,5 +19,6 @@
   "TELEGRAM_CHATID": "",
   "BUYING_PRICE_DIVIDER": "1",
   "PORT": "3000",
-  "STATE": "ON"
+  "STATE": "ON",
+  "TESTING": true
 }
