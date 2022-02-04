@@ -20,5 +20,5 @@
   "BUYING_PRICE_DIVIDER": "1",
   "PORT": "3000",
   "STATE": "ON",
-  "TESTING": true
+  "TESTING": false
 }

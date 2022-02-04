@@ -204,13 +204,12 @@ function main() {
     //start mark price stream
     binance.futuresAggTradeStream( obj.MAIN_MARKET,  tickerRepo.updatePrice);
 
-    //start userData stream
+    // start userData stream
     binance.websockets.userFutureData(
         accountRepo.ws_margin_call, 
         accountRepo.ws_account_update, 
         accountRepo.ws_order_update, 
         accountRepo.ws_account_config_update);
-
 
     server.listen(port, '0.0.0.0', () => {
         logger.info(`Binance bot listening at http://localhost:${port}`)

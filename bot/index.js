@@ -33,6 +33,8 @@ export const trade = async (settings, socket) => {
             //const { positions, assets } = await accountBalances(settings)
             const {positions, assets } = await binance.futuresAccount()
 
+            //console.log(`Account \nPositions: ${JSON.stringify(positions)} \nAssets: ${JSON.stringify(assets)}`)
+
             if (positions) {
                 for (let i in positions) {
                     if (positions[i].symbol == `${settings.MAIN_MARKET}`) {
@@ -45,13 +47,12 @@ export const trade = async (settings, socket) => {
                 acbl.POSITION = undefined; //reset
             }
             if(assets) {
-    
-                //console.log(`Account assets are ${JSON.stringify(assets)}`)
                 for (let i in assets) {
                     if (assets[i].asset == `${settings.info.quoteAsset}`) {
                         acbl.FIAT = assets[i].availableBalance
                     }
                 }
+                console.log(`Account fiat balances are ${acbl.FIAT}`)
             }
         })();
 
